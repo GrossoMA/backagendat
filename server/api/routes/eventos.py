@@ -61,9 +61,8 @@ def get_eventos_by_id(user_id,evento_id):
         return jsonify(objEvento.to_json())
 
     return jsonify({"mensaje": "No se encontraron eventos"})
-<<<<<<< HEAD
-   
-=======
+
+
     # eventotList = []
     # for row in data:
     #     objEvento = Eventos(row)
@@ -71,7 +70,6 @@ def get_eventos_by_id(user_id,evento_id):
     # if (len(eventotList) > 0):
     #     return jsonify(eventotList)
     # return jsonify({"messaje": "No se encontraron eventos"})
->>>>>>> 5c29e879434268390c9d82270b70c3f3ee5df42a
 
 
 # Función para verificar la extensión del archivo
