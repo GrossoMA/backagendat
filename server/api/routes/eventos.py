@@ -89,38 +89,76 @@ def create_evento(user_id):
     try:
         CAMPOS_REQUERIDOS = ['nombre_evento', 'id_municipio', 'id_localidad', 'direccion', 'fecha_inicio', 'mes_estimado', 'hora','id_tipo_evento','descripcion','palabras_claves','id_estado']
 
-
         # Captura los datos en formato JSON
-        data = request.get_json()
-        print("-->-->",data)
+        data_json = request.get_json()
+        print("--> JSON:", data_json)
 
 
         print("----------")
-        # Captura los datos del formulario
-        data = request.form.to_dict()
-        palabras_claves = request.form.get('palabras_claves')
-        print("data")
-        print(data)
-
         # Convierte el campo de palabras clave de JSON a lista
-        if palabras_claves:
-            data['palabras_claves'] = json.loads(palabras_claves)
+        # (si no es una lista ya)
+        if 'palabras_claves' in data_json and not isinstance(data_json['palabras_claves'], list):
+            data_json['palabras_claves'] = json.loads(data_json['palabras_claves'])
+        print("----------despues de palabrasclaves")
         # Encuentra los campos que faltan
-        print("----------buscando campos faltantes")
-        campos_faltantes = [campo for campo in CAMPOS_REQUERIDOS if campo not in data]
-        print("campos_faltantes",campos_faltantes)
-
+        campos_faltantes = [campo for campo in CAMPOS_REQUERIDOS if campo not in data_json]
         if campos_faltantes:
             # Devuelve un mensaje con los campos faltantes
-            print("return campos faltantes", campos_faltantes)
             return jsonify({"message": "Faltan campos en la solicitud", "campos_faltantes": campos_faltantes}), 400
+        print("----------despues de campos faltantes")
+        
+         # Se comprueban que los campos estén completos
+        if not data_json or not all(campo in data_json for campo in CAMPOS_REQUERIDOS): 
+            return jsonify({"message": "Faltan campos en la solicitud", "campos_faltantes": CAMPOS_REQUERIDOS}), 400
+        print("----------despues de campos requeridos")
+        
+        # Crea una instancia de Cliente
+        new_evento = {
+            'nombre_evento':data_json['nombre_evento'],
+            'id_municipio':data_json['id_municipio'],
+            'id_localidad':data_json['id_localidad'],
+            'direccion':data_json['direccion'],
+            'fecha_inicio':data_json['fecha_inicio'],
+            'mes_estimado':data_json['mes_estimado'],
+            'hora':data_json['hora'],
+            'id_tipo_evento':data_json['id_tipo_evento'],
+            'descripcion':data_json['descripcion'],
+            'palabras_claves': json.dumps(data_json['palabras_claves']),
+            'id_estado':data_json['id_estado'],
+            'img1': data_json.get('img1', None),
+            'img2': data_json.get('img2', None),
+            'img3': data_json.get('img3', None)
+        }
+        print("----------despues de nuevo evento")
+        
+        # --------------------------------
 
-        # Se comprueban que los campos estén completos
-        if not data or not all(campo in data for campo in CAMPOS_REQUERIDOS): 
-                print("return comprobar estan todos los campos", campos_faltantes)          
-                return jsonify({"message"}), 400
+        # # Captura los datos del formulario
+        # data = request.form.to_dict()
+        # palabras_claves = request.form.get('palabras_claves')
+        # print("data")
+        # print(data)
+
+        # # Convierte el campo de palabras clave de JSON a lista
+        # if palabras_claves:
+        #     data['palabras_claves'] = json.loads(palabras_claves)
+        # # Encuentra los campos que faltan
+        # print("----------buscando campos faltantes")
+        # campos_faltantes = [campo for campo in CAMPOS_REQUERIDOS if campo not in data]
+        # print("campos_faltantes",campos_faltantes)
+
+        # if campos_faltantes:
+        #     # Devuelve un mensaje con los campos faltantes
+        #     print("return campos faltantes", campos_faltantes)
+        #     return jsonify({"message": "Faltan campos en la solicitud", "campos_faltantes": campos_faltantes}), 400
+
+        # # Se comprueban que los campos estén completos
+        # if not data or not all(campo in data for campo in CAMPOS_REQUERIDOS): 
+        #         print("return comprobar estan todos los campos", campos_faltantes)          
+        #         return jsonify({"message"}), 400
         
         # Manejar las imágenes si están presentes y son válidas
+        print("----------despues de imagenm")
         image_fields = ['img1', 'img2', 'img3']
         for field in image_fields:
             if field in request.files:
@@ -129,11 +167,12 @@ def create_evento(user_id):
                     random_string = generate_random_string()
                     filename = secure_filename(f"{field}_{random_string}.{image.filename.rsplit('.', 1)[1].lower()}")
                     image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    data[field] = filename
+                    data_json[field] = filename
                 else:
-                    data[field] = None
+                    data_json[field] = None
             else:
-                data[field] = None
+                data_json[field] = None
+        print("----------despues de imagenes")
 
         # Aca TODO ver la posibilidad de controlar eventdos duplicados
         # cur = mysql.connection.cursor()
@@ -150,22 +189,22 @@ def create_evento(user_id):
 
         # Crea una instancia de Cliente
 
-        new_evento = {
-            'nombre_evento':data['nombre_evento'],
-            'id_municipio':data['id_municipio'],
-            'id_localidad':data['id_localidad'],
-            'direccion':data['direccion'],
-            'fecha_inicio':data['fecha_inicio'],
-            'mes_estimado':data['mes_estimado'],
-            'hora':data['hora'],
-            'id_tipo_evento':data['id_tipo_evento'],
-            'descripcion':data['descripcion'],
-            'palabras_claves': json.dumps(data['palabras_claves']),
-            'id_estado':data['id_estado'],
-            'img1': data['img1'],
-            'img2': data['img2'],
-            'img3': data['img3']
-        }
+        # new_evento = {
+        #     'nombre_evento':data['nombre_evento'],
+        #     'id_municipio':data['id_municipio'],
+        #     'id_localidad':data['id_localidad'],
+        #     'direccion':data['direccion'],
+        #     'fecha_inicio':data['fecha_inicio'],
+        #     'mes_estimado':data['mes_estimado'],
+        #     'hora':data['hora'],
+        #     'id_tipo_evento':data['id_tipo_evento'],
+        #     'descripcion':data['descripcion'],
+        #     'palabras_claves': json.dumps(data['palabras_claves']),
+        #     'id_estado':data['id_estado'],
+        #     'img1': data['img1'],
+        #     'img2': data['img2'],
+        #     'img3': data['img3']
+        # }
 
         # Conecta con la base de datos
         cur = mysql.connection.cursor()
