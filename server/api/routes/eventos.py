@@ -25,8 +25,8 @@ def get_all_eventos_by_user_id(user_id):
     JOIN municipios m ON e.id_municipio = m.id_municipio
     JOIN localidades l ON e.id_localidad = l.id_localidad
     WHERE e.id_usuario = {0}
-    order by 
-    CASE 
+    order by
+    CASE
     WHEN e.fecha_inicio IS NULL THEN 1
     ELSE 0
     END,
@@ -37,8 +37,8 @@ def get_all_eventos_by_user_id(user_id):
     for row in data:
         objEvento = Eventos(row)
         eventotList.append(objEvento.to_json())
-    if (len(eventotList) > 0):            
-        return jsonify(eventotList)    
+    if (len(eventotList) > 0):
+        return jsonify(eventotList)
     return jsonify({"messaje": "No se encontraron eventos"})
 
 # retorna todos los eventos del usuario solicitado
@@ -53,15 +53,25 @@ def get_eventos_by_id(user_id,evento_id):
     FROM eventos e
     JOIN municipios m ON e.id_municipio = m.id_municipio
     JOIN localidades l ON e.id_localidad = l.id_localidad
-    WHERE e.id_evento = {0}    
+    WHERE e.id_evento = {0}
 '''.format(evento_id))
     row = cur.fetchone()
     if row:
         objEvento = Eventos(row)
         return jsonify(objEvento.to_json())
-    
+
     return jsonify({"mensaje": "No se encontraron eventos"})
+<<<<<<< HEAD
    
+=======
+    # eventotList = []
+    # for row in data:
+    #     objEvento = Eventos(row)
+    #     eventotList.append(objEvento.to_json())
+    # if (len(eventotList) > 0):
+    #     return jsonify(eventotList)
+    # return jsonify({"messaje": "No se encontraron eventos"})
+>>>>>>> 5c29e879434268390c9d82270b70c3f3ee5df42a
 
 
 # Función para verificar la extensión del archivo
@@ -80,14 +90,23 @@ def create_evento(user_id):
     print("---insertando evento")
     try:
         CAMPOS_REQUERIDOS = ['nombre_evento', 'id_municipio', 'id_localidad', 'direccion', 'fecha_inicio', 'mes_estimado', 'hora','id_tipo_evento','descripcion','palabras_claves','id_estado']
-        
-        
+
+
         # Captura los datos en formato JSON
         data = request.get_json()
         print("-->-->",data)
 
-        print("----------")
 
+        print("----------")
+        # Captura los datos del formulario
+        data = request.form.to_dict()
+        palabras_claves = request.form.get('palabras_claves')
+        print("data")
+        print(data)
+
+        # Convierte el campo de palabras clave de JSON a lista
+        if palabras_claves:
+            data['palabras_claves'] = json.loads(palabras_claves)
         # Encuentra los campos que faltan
         print("----------buscando campos faltantes")
         campos_faltantes = [campo for campo in CAMPOS_REQUERIDOS if campo not in data]
@@ -118,11 +137,25 @@ def create_evento(user_id):
             else:
                 data[field] = None
 
-          
+        # Aca TODO ver la posibilidad de controlar eventdos duplicados
+        # cur = mysql.connection.cursor()
+        # cur.execute('SELECT COUNT(*) FROM eventos WHERE cuit_cuil = %s OR dni = %s OR email = %s', (data['cuitCuil'],  data['dni'], data['email']))
+        # count = cur.fetchone()[0]
+        # cur = mysql.connection.cursor()
+        # ---------------------------------------------------------------- esto se puede mover
+
+        # # Si alguno de los valores ya existe, abortar la actualización
+        # if count > 0:
+        #     print('aca')
+        #     return jsonify({"message": "Al menos uno de los valores ya existe en la tabla clientes"}),406
+
+
+        # Crea una instancia de Cliente
+
         new_evento = {
             'nombre_evento':data['nombre_evento'],
             'id_municipio':data['id_municipio'],
-            'id_localidad':data['id_localidad'], 
+            'id_localidad':data['id_localidad'],
             'direccion':data['direccion'],
             'fecha_inicio':data['fecha_inicio'],
             'mes_estimado':data['mes_estimado'],
@@ -135,21 +168,21 @@ def create_evento(user_id):
             'img2': data['img2'],
             'img3': data['img3']
         }
-        
+
         # Conecta con la base de datos
         cur = mysql.connection.cursor()
-        
+
         # Inserta el evento en la base de datos
-        consulta = '''INSERT INTO eventos (nombre_evento, id_usuario, id_municipio, id_localidad, direccion, fecha_inicio, mes_estimado, hora, id_tipo_evento, descripcion, palabras_claves, id_estado, img1, img2, img3) 
+        consulta = '''INSERT INTO eventos (nombre_evento, id_usuario, id_municipio, id_localidad, direccion, fecha_inicio, mes_estimado, hora, id_tipo_evento, descripcion, palabras_claves, id_estado, img1, img2, img3)
                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
-        valores = (new_evento['nombre_evento'], user_id, new_evento['id_municipio'], 
+        valores = (new_evento['nombre_evento'], user_id, new_evento['id_municipio'],
                    new_evento['id_localidad'], new_evento['direccion'], new_evento['fecha_inicio'], new_evento['mes_estimado'],
                    new_evento['hora'], new_evento['id_tipo_evento'], new_evento['descripcion'], new_evento['palabras_claves'], new_evento['id_estado'], new_evento['img1'], new_evento['img2'], new_evento['img3'])
         cur.execute(consulta, valores)
 
         # Realiza el commit y cierra la conexión
         mysql.connection.commit()
-        cur.close()                 
+        cur.close()
 
         return jsonify({"message": "Evento creado exitosamente"}), 201
 
@@ -169,9 +202,9 @@ def update_evento(user_id, evento_id):
         CAMPOS_REQUERIDOS = ['nombre_evento', 'id_municipio', 'id_localidad', 'direccion', 'fecha_inicio', 'mes_estimado', 'hora','id_tipo_evento','descripcion','palabras_claves','id_estado']
 
         # Captura los datos en formato JSON
-        data = request.get_json()   
+        data = request.get_json()
 
-        # comprobamos si se proporcionaron los datos necesarios    
+        # comprobamos si se proporcionaron los datos necesarios
         if not data or not all(campo in data for campo in CAMPOS_REQUERIDOS):
             return jsonify({"message": "Datos incompletos"}), 400
 
@@ -184,13 +217,13 @@ def update_evento(user_id, evento_id):
         params = (data['nombre_evento'], data['id_municipio'], data['id_localidad'], evento_id)
         # Imprime la consulta SQL y sus parámetros para depuración
         # print("Ejecutando consulta SQL:", query)
-        # print("Con parámetros:", params)
+        print("Con parámetros:", params)
 
         # Ejecuta la consulta
         cur = mysql.connection.cursor()
         cur.execute(query, params)
-        count = cur.fetchone()[0]             
-        cur = mysql.connection.cursor()      
+        count = cur.fetchone()[0]
+        cur = mysql.connection.cursor()
         # ---------------------------------------------------------------- esto se puede mover
 
         # Si alguno de los valores ya existe, abortar la actualización
@@ -200,51 +233,51 @@ def update_evento(user_id, evento_id):
 
         # Actualiza el evento en la base de datos
         consulta = '''
-        UPDATE eventos 
-        SET 
-            nombre_evento = %s, 
-            id_municipio = %s, 
-            id_localidad = %s, 
-            direccion = %s, 
-            fecha_inicio = %s, 
-            mes_estimado = %s, 
-            hora = %s, 
-            id_tipo_evento = %s, 
-            descripcion = %s, 
-            palabras_claves = %s, 
-            id_estado = %s 
-        WHERE 
-            id_evento = %s AND 
+        UPDATE eventos
+        SET
+            nombre_evento = %s,
+            id_municipio = %s,
+            id_localidad = %s,
+            direccion = %s,
+            fecha_inicio = %s,
+            mes_estimado = %s,
+            hora = %s,
+            id_tipo_evento = %s,
+            descripcion = %s,
+            palabras_claves = %s,
+            id_estado = %s
+        WHERE
+            id_evento = %s AND
             id_usuario = %s
         '''
-        
+
         valores = (
-            data['nombre_evento'], 
-            data['id_municipio'], 
-            data['id_localidad'], 
-            data['direccion'], 
-            data['fecha_inicio'], 
-            data['mes_estimado'], 
-            data['hora'], 
-            data['id_tipo_evento'], 
-            data['descripcion'], 
-            data['palabras_claves'], 
-            data['id_estado'], 
-            evento_id, 
+            data['nombre_evento'],
+            data['id_municipio'],
+            data['id_localidad'],
+            data['direccion'],
+            data['fecha_inicio'],
+            data['mes_estimado'],
+            data['hora'],
+            data['id_tipo_evento'],
+            data['descripcion'],
+            data['palabras_claves'],
+            data['id_estado'],
+            evento_id,
             user_id
         )
         cur.execute(consulta, valores)
 
         # Realiza el commit y cierra la conexión
         mysql.connection.commit()
-        cur.close()  
+        cur.close()
         return jsonify({"message": "Evento actualizado exitosamente"}), 200
 
     except Exception as e:
-        # Maneja cualquier error que pueda ocurrir durante el proceso  
-        print("error:", str(e))     
+        # Maneja cualquier error que pueda ocurrir durante el proceso
+        print("error:", str(e))
         return jsonify({"message": "Datos no actualizados"}), 500
-    
+
 # Eliminar un evento
 @app.route('/user/<int:user_id>/eventos/<int:evento_id>', methods=['DELETE'])
 @token_required
