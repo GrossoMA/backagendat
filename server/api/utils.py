@@ -138,3 +138,18 @@ def factura_resource(func):
                 return jsonify({"message": "No tiene permisos para acceder a este recurso"}), 401
         return func(*args, **kwargs)
     return decorated
+
+def authorize_municipio(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = request.headers.get('user-id')
+        user = get_user_from_db(user_id)  # Obtener usuario de la base de datos
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        
+        municipio_id = kwargs.get('municipio_id')
+        if user['id_municipio'] != municipio_id and user['role'] != 'admin':
+            return jsonify({'message': 'Unauthorized access'}), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function

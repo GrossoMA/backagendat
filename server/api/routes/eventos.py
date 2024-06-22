@@ -61,13 +61,7 @@ def get_eventos_by_id(user_id,evento_id):
         return jsonify(objEvento.to_json())
     
     return jsonify({"mensaje": "No se encontraron eventos"})
-    # eventotList = []
-    # for row in data:
-    #     objEvento = Eventos(row)
-    #     eventotList.append(objEvento.to_json())
-    # if (len(eventotList) > 0):            
-    #     return jsonify(eventotList)    
-    # return jsonify({"messaje": "No se encontraron eventos"})
+   
 
 
 # Función para verificar la extensión del archivo
@@ -83,31 +77,30 @@ def generate_random_string():
 @token_required
 @user_resources
 def create_evento(user_id):
+    print("---insertando evento")
     try:
         CAMPOS_REQUERIDOS = ['nombre_evento', 'id_municipio', 'id_localidad', 'direccion', 'fecha_inicio', 'mes_estimado', 'hora','id_tipo_evento','descripcion','palabras_claves','id_estado']
         
         
         # Captura los datos en formato JSON
-        # data = request.get_json()
-        # print(data)
+        data = request.get_json()
+        print("-->-->",data)
 
-        # Captura los datos del formulario
-        data = request.form.to_dict()
-        palabras_claves = request.form.get('palabras_claves')
-
-        # Convierte el campo de palabras clave de JSON a lista
-        if palabras_claves:
-            data['palabras_claves'] = json.loads(palabras_claves)
+        print("----------")
 
         # Encuentra los campos que faltan
+        print("----------buscando campos faltantes")
         campos_faltantes = [campo for campo in CAMPOS_REQUERIDOS if campo not in data]
+        print("campos_faltantes",campos_faltantes)
 
         if campos_faltantes:
             # Devuelve un mensaje con los campos faltantes
+            print("return campos faltantes", campos_faltantes)
             return jsonify({"message": "Faltan campos en la solicitud", "campos_faltantes": campos_faltantes}), 400
 
         # Se comprueban que los campos estén completos
-        if not data or not all(campo in data for campo in CAMPOS_REQUERIDOS):           
+        if not data or not all(campo in data for campo in CAMPOS_REQUERIDOS): 
+                print("return comprobar estan todos los campos", campos_faltantes)          
                 return jsonify({"message"}), 400
         
         # Manejar las imágenes si están presentes y son válidas
@@ -125,21 +118,7 @@ def create_evento(user_id):
             else:
                 data[field] = None
 
-        
-        # Aca TODO ver la posibilidad de controlar eventdos duplicados
-        # cur = mysql.connection.cursor()
-        # cur.execute('SELECT COUNT(*) FROM eventos WHERE cuit_cuil = %s OR dni = %s OR email = %s', (data['cuitCuil'],  data['dni'], data['email']))
-        # count = cur.fetchone()[0]             
-        # cur = mysql.connection.cursor()      
-        # ---------------------------------------------------------------- esto se puede mover
-
-        # # Si alguno de los valores ya existe, abortar la actualización
-        # if count > 0:
-        #     print('aca')
-        #     return jsonify({"message": "Al menos uno de los valores ya existe en la tabla clientes"}),406
-
-        
-        # Crea una instancia de Cliente        
+          
         new_evento = {
             'nombre_evento':data['nombre_evento'],
             'id_municipio':data['id_municipio'],
